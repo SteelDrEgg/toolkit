@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7-segment display code generator</title>
+    <style>
+        :root {
+            --display-background: #c0c0c0;
+            --display-segment-inactive: #e0e0e0;
+            --display-segment-active: #00ff00;
+            --display-segment-text: #888;
+            
+            --ui-background: #f5f5f5;
+            --ui-surface: #ffffff;
+            --ui-border: #d0d0d0;
+            --ui-text-primary: #333333;
+            --ui-text-secondary: #666666;
+            --ui-text-muted: #999999;
+            --ui-accent: #2196F3;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: transparent;
+            color: var(--ui-text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2vh;
+            margin: 0;
+            width: 100vw;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            grid-template-rows: 4fr 1fr;
+            grid-template-areas: 
+                "display controls"
+                "output output";
+            width: 90vw;
+            height: 90vh;
+            gap: 3vh;
+        }
+
+        .display-container {
+            grid-area: display;
+            display: grid;
+            grid-template-columns: 1fr 1fr 8fr 1fr 1fr;
+            grid-template-rows: 1fr 8fr 1fr 8fr 1fr;
+            grid-template-areas: 
+                ". . a . ."
+                ". f . b ."
+                ". . g . ."
+                ". e . c ."
+                ". . d . h";
+            background: var(--display-background);
+            border-radius: 1.5vh;
+            padding: 3vh;
+            place-items: center;
+        }
+
+        .segment {
+            background: var(--display-segment-inactive);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3vh;
+            font-weight: bold;
+            color: var(--display-segment-text);
+        }
+
+        .segment.active {
+            background: var(--display-segment-active);
+            color: #000;
+        }
+
+        .horizontal {
+            width: 100%;
+            height: 100%;
+            clip-path: polygon(15% 0%, 85% 0%, 100% 50%, 85% 100%, 15% 100%, 0% 50%);
+        }
+
+        .vertical {
+            width: 100%;
+            height: 100%;
+            clip-path: polygon(0% 15%, 50% 0%, 100% 15%, 100% 85%, 50% 100%, 0% 85%);
+        }
+
+        .seg-a { grid-area: a; }
+        .seg-b { grid-area: b; }
+        .seg-c { grid-area: c; }
+        .seg-d { grid-area: d; }
+        .seg-e { grid-area: e; }
+        .seg-f { grid-area: f; }
+        .seg-g { grid-area: g; }
+
+        .dot {
+            grid-area: h;
+            width: 100%;
+            height: 100%;
+            max-width: 4vh;
+            max-height: 4vh;
+            border-radius: 50%;
+            background: var(--display-segment-inactive);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5vh;
+            font-weight: bold;
+            color: var(--display-segment-text);
+        }
+
+        .dot.active {
+            background: var(--display-segment-active);
+            color: #000;
+        }
+
+        .code-output {
+            grid-area: output;
+            background: var(--ui-surface);
+            border: 1px solid var(--ui-border);
+            border-radius: 1vh;
+            padding: 2vh;
+            font-family: monospace;
+            font-size: 2.5vh;
+            white-space: pre-wrap;
+            color: var(--ui-text-primary);
+            overflow-y: auto;
+        }
+
+        .controls-container {
+            grid-area: controls;
+            background: var(--ui-surface);
+            border: 1px solid var(--ui-border);
+            border-radius: 1vh;
+            padding: 2vh;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            gap: 1.5vh;
+        }
+
+        .tab-switch {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--ui-background);
+            border-radius: 1vh;
+            gap: 0;
+            width: 100%;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 1.5vh 2vw;
+            background: transparent;
+            border: none;
+            border-radius: 0.7vh;
+            font-weight: bold;
+            font-size: 2vh;
+            color: var(--ui-text-muted);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button:hover {
+            color: var(--ui-text-primary);
+        }
+
+        .tab-button.active {
+            background: var(--ui-accent);
+            color: white;
+            box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+        }
+
+        .description-item {
+            text-align: left;
+            font-weight: bold;
+            color: var(--ui-text-primary);
+            width: 100%;
+            margin-bottom: 0.5vh;
+        }
+
+        .description-primary {
+            font-size: 2vh;
+        }
+
+        .description-secondary {
+            font-size: 1.8vh;
+            font-family: monospace;
+        }
+
+        .section-title {
+            font-size: 1.6vh;
+            font-weight: bold;
+            color: var(--ui-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            /* margin-bottom: 0.5vh; */
+            text-align: left;
+            width: 100%;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="display-container">
+            <div class="segment horizontal seg-a" id="seg-a" onclick="toggleSegment('a')">A</div>
+            <div class="segment vertical seg-b" id="seg-b" onclick="toggleSegment('b')">B</div>
+            <div class="segment vertical seg-c" id="seg-c" onclick="toggleSegment('c')">C</div>
+            <div class="segment horizontal seg-d" id="seg-d" onclick="toggleSegment('d')">D</div>
+            <div class="segment vertical seg-e" id="seg-e" onclick="toggleSegment('e')">E</div>
+            <div class="segment vertical seg-f" id="seg-f" onclick="toggleSegment('f')">F</div>
+            <div class="segment horizontal seg-g" id="seg-g" onclick="toggleSegment('g')">G</div>
+            
+            <div class="dot" id="dot" onclick="toggleSegment('dot')">H</div>
+        </div>
+
+        <div class="controls-container">
+            <!-- <div class="section-title">Mode Selection</div> -->
+            <div class="tab-switch">
+                <button class="tab-button active" id="cathode-tab" onclick="setMode(false)">Cathode</button>
+                <button class="tab-button" id="anode-tab" onclick="setMode(true)">Anode</button>
+            </div>
+            
+            <div class="section-title">Logic</div>
+            <div class="description-item description-primary" id="logic-display">0=Active, 1=Inactive</div>
+            
+            <div class="section-title">Bit Order</div>
+            <div class="description-item description-secondary">H G F E D C B A</div>
+        </div>
+
+        <div class="code-output" id="code-output"></div>
+    </div>
+
+    <script>
+        const segmentStates = {
+            a: false,
+            b: false,
+            c: false,
+            d: false,
+            e: false,
+            f: false,
+            g: false,
+            dot: false
+        };
+
+        let isAnodeMode = false;
+
+        function setMode(anodeMode) {
+            isAnodeMode = anodeMode;
+            
+            // Update tab styles
+            const cathodeTab = document.getElementById('cathode-tab');
+            const anodeTab = document.getElementById('anode-tab');
+            const logicDisplay = document.getElementById('logic-display');
+            
+            if (isAnodeMode) {
+                cathodeTab.classList.remove('active');
+                anodeTab.classList.add('active');
+                logicDisplay.textContent = '1=Active, 0=Inactive';
+            } else {
+                cathodeTab.classList.add('active');
+                anodeTab.classList.remove('active');
+                logicDisplay.textContent = '0=Active, 1=Inactive';
+            }
+            
+            // Re-generate code
+            generateCode();
+        }
+
+        // Toggle segment state
+        function toggleSegment(segment) {
+            segmentStates[segment] = !segmentStates[segment];
+            const element = document.getElementById(segment === 'dot' ? 'dot' : 'seg-' + segment);
+            
+            if (segmentStates[segment]) {
+                element.classList.add('active');
+            } else {
+                element.classList.remove('active');
+            }
+            
+            generateCode();
+        }
+
+
+        // Generate code representation
+        function generateCode() {
+            const output = document.getElementById('code-output');
+            
+            // According to the table required bit order: h g f e d c b a (H G F E D C B A)
+            const binaryArray = ['dot', 'g', 'f', 'e', 'd', 'c', 'b', 'a'].map(seg => {
+                if (isAnodeMode) {
+                    // Anode mode: active=1, inactive=0
+                    return segmentStates[seg] ? '1' : '0';
+                } else {
+                    // Cathode mode: active=0, inactive=1
+                    return segmentStates[seg] ? '0' : '1';
+                }
+            });
+            const binaryString = binaryArray.join('');
+            
+            // Generate hexadecimal value
+            const hexValue = parseInt(binaryString, 2).toString(16).toUpperCase().padStart(2, '0');
+            
+            // Generate list of active segments
+            const activeSegments = Object.keys(segmentStates)
+                .filter(seg => segmentStates[seg])
+                .map(seg => seg === 'dot' ? 'H' : seg.toUpperCase())
+                .join(', ');
+            
+            output.textContent = /*`Active segments: ${activeSegments || 'None'}*/
+`Binary representation: ${binaryString}
+Hexadecimal value: 0x${hexValue}
+Decimal value: ${parseInt(binaryString, 2)}`;
+        }
+
+        // Generate initial code and set initial mode when page loads
+        window.onload = function() {
+            // Set initial mode to Cathode (already set in HTML with active class)
+            generateCode();
+        };
+
+    </script>
+</body>
+</html>
